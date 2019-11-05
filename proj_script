@@ -1,0 +1,48 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Nov  1 10:32:55 2019
+
+@author: Ian Heckman, Matt Berns, & Alex Trout
+"""
+# importing libraries 
+import arcpy 
+from arcpy import env
+
+# setting workspace 
+env.workspace = r'D:\Programming\Suitability_project\data'
+env.overwriteOutput = 1 
+
+boundary = 'Project_Bounds.shp'
+clip_wetlands = 'proj_wetlands.shp'
+
+unclipped_shps = ['Highways.shp', 'Critical_habitat.shp']
+clip_results = ['.\proj_roads.shp', '.\proj_habitat.shp']
+buffered = ['.\roads_buff.shp', '.\habitat_buff.shp', '.\wetlands_buff.shp']
+
+
+# clipping each input feature to the project boundaries 
+# arcpy.Clip_analysis(wetlands, boundary, clipped_wetlands)
+for u, c in zip(unclipped_shps, clip_results): 
+    arcpy.Clip_analysis(u, boundary, c)
+clip_results.append(clip_wetlands)
+counter = 0 
+for r, e in zip(clip_results, buffered):
+    if counter == 0:
+        arcpy.EucDistance(r, 50, 50, e)
+        reclassify = arcpy.Reclassify(e, 'Value', RemapRamge([0, 50, 1], [50, 100000, 'NODATA']))
+        reclassify.save(e)
+        counter = counter + 1
+    elif counter == 1: 
+        arcpy.EucDistance(r, 500, 50, e)
+        reclassify = arcpy.Reclassify(e, 'Value', RemapRamge([0, 500, 1], [500, 100000, 'NODATA']))
+        reclassify.save(e)
+        counter = counter + 1
+    elif counter == 2: 
+        arcpy.EucDistance(r, 100, 50, e)
+        reclassify = arcpy.Reclassify(e, 'Value', RemapRamge([0, 100, 1], [100, 100000, 'NODATA']))
+        reclassify.save(e)
+    print('Euclidean Distance completed')
+    
+
+
+    
