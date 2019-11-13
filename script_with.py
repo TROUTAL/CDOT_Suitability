@@ -21,33 +21,38 @@ env.overwriteOutput = 1
 
 unclipped_shps = ['Highways.shp', 'Critical_habitat.shp', 'Wetlands.shp']
 clip_results = ['proj_roads.shp', 'proj_habitat.shp', 'proj_wetlands.shp']
-dists = ['roads_dist', 'habitat_dist', 'wetlands_dist']
-buffered = ['roads_buff', 'habitat_buff', 'wetlands_buff']
+dists = ['roads_dist', 'habitat_dist', 'wetlands_dist', 'proj_slope']
+buffered = ['roads_buff', 'habitat_buff', 'wetlands_buff', 'slope']
 
 # clipping each input feature to the project boundaries 
 # appending wetlands clipped file to clipped list as it was already clipped
 for u, c in zip(unclipped_shps, clip_results): 
     arcpy.Clip_analysis(u, boundary, c)
 
+# the DEM raster must be clipped using a different method, appended to clip_results
+extract = arcpy.sa.ExtractByMask('dem.tif', boundary)
+extract.save('proj_dem.tif')
+clip_results.append('proj_dem.tif')
+
 # running euclidean distance function for each input
 # reclassifying euclidean distance outputs
-counter = 0 
 for r, d, b in zip(clip_results, dists, buffered):
-    if counter == 0:
+    if r == 'project_roads.shp':
         d = arcpy.sa.EucDistance(r, 300000, 30)
         reclassify = arcpy.sa.Reclassify(d, 'Value', RemapRange([[0, 90, 1], [90, 300000, 0]]))
         reclassify.save(b)
-        counter = counter + 1
-    elif counter == 1: 
+    elif r == 'proj_habitat.shp': 
         d = arcpy.sa.EucDistance(r, 300000, 30)
         reclassify = arcpy.sa.Reclassify(d, 'Value', RemapRange([[0, 510, 0], [510, 300000, 1]]))
         reclassify.save(b)
-        counter = counter + 1
-    elif counter == 2: 
+    elif r == 'proj_wetlands.shp': 
         d = arcpy.sa.EucDistance(r, 300000, 30)
         reclassify = arcpy.sa.Reclassify(d, 'Value', RemapRange([[0, 120, 0], [120, 300000, 1]]))
         reclassify.save(b)
-
+    elif r == 'proj_dem.tif':
+        d = arcpy.sa.Slope(r, 'PERCENT_RISE')
+        d.save(b)
+        
 # copying the rasters created in the Euclidean Distance function and copying them to a TIFF file
 # converting TIFF file to numpy array and appending them to a list 
 ras_arrays = []
