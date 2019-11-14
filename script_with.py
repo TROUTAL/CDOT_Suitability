@@ -31,13 +31,14 @@ for u, c in zip(unclipped_shps, clip_results):
 
 # the DEM raster must be clipped using a different method, appended to clip_results
 extract = arcpy.sa.ExtractByMask('dem.tif', boundary)
-extract.save('proj_dem.tif')
+extract.save('dem_10.tif')
+arcpy.Resample_management('dem_10.tif', 'proj_dem.tif', '30', 'NEAREST')
 clip_results.append('proj_dem.tif')
 
 # running euclidean distance function for each input
 # reclassifying euclidean distance outputs
 for r, d, b in zip(clip_results, dists, buffered):
-    if r == 'project_roads.shp':
+    if r == 'proj_roads.shp':
         d = arcpy.sa.EucDistance(r, 300000, 30)
         reclassify = arcpy.sa.Reclassify(d, 'Value', RemapRange([[0, 90, 1], [90, 300000, 0]]))
         reclassify.save(b)
@@ -60,9 +61,17 @@ for GRID in buffered:
     tif = arcpy.CopyRaster_management(GRID, str(GRID) + '.tif')
     NumpyArray = arcpy.RasterToNumPyArray(GRID)
     ras_arrays.append(NumpyArray)
+
+# reclassifying slope array to fit slope requirements 
+np.where(ras_arrays[3] > 4, 0, 1)
+
+for ras in ras_arrays:
+    print(ras.shape[0], ras.shape[1])
     
-for i in ras_arrays:
-    suitras = np.sum(ras_arrays[0:]) # Attempting to add all numpy rasters together in ras_arrays list. Don't think it's working.
+    
+# adding arrays together to get suitable areas array
+suitras = ras_arrays[0] + ras_arrays[1] + ras_arrays[2] + ras_arrays[3]
+
 
 # Writing the added numpy array to a raster
 ras = rasterio.open(r'D:\Programming\Suitability_project\data_with\habitat_buff.tif')
