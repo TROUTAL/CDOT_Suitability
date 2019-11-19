@@ -19,20 +19,9 @@ env.extent = boundary
 env.mask = boundary 
 env.overwriteOutput = 1 
 
-unclipped_shps = ['Highways.shp', 'Critical_habitat.shp', 'Wetlands.shp']
-clip_results = ['proj_roads.shp', 'proj_habitat.shp', 'proj_wetlands.shp']
+
+clip_results = ['proj_roads.shp', 'proj_habitat.shp', 'proj_wetlands.shp', 'proj_dem.tif']
 ras_arrays = []
-
-# clipping each input feature to the project boundaries 
-# appending wetlands clipped file to clipped list as it was already clipped
-for u, c in zip(unclipped_shps, clip_results): 
-    arcpy.Clip_analysis(u, boundary, c)
-
-# the DEM raster must be clipped using a different method, appended to clip_results
-extract = arcpy.sa.ExtractByMask('dem.tif', boundary)
-extract.save('dem_10.tif')
-arcpy.Resample_management('dem_10.tif', 'proj_dem.tif', '30', 'NEAREST')
-clip_results.append('proj_dem.tif')
 
 # running euclidean distance function for each input
 # reclassifying euclidean distance outputs
@@ -76,3 +65,7 @@ meta = ras.meta
 # Writing the added numpy array to a raster 
 with rasterio.open(r'D:\Programming\Suitability_project\data_with\Suit_Corridors.tif', 'w', **meta) as dest:
     dest.write(suitras.astype('int32'), indexes=1)
+
+
+
+    
