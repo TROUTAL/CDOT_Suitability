@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Created on Fri Nov  1 10:32:55 2019
 
@@ -11,6 +10,10 @@ from arcpy.sa import *
 import os
 import rasterio 
 import numpy as np
+from datetime import datetime
+
+# starting timer
+startTime = datetime.now()
 
 # setting workspace 
 env.workspace = r'D:\Programming\Suitability_project\data_with'
@@ -22,7 +25,6 @@ env.overwriteOutput = 1
 # zonal statistics function for sensitivity analysis comparison 
 def ZoneStats (ValueArray):
     zones = np.unique(ValueArray)
-    print(zones)
     for i in zones[1:]:
         flat = ValueArray.ravel()
         number = np.where(flat == i, flat, 0)
@@ -110,13 +112,23 @@ with rasterio.open(r'D:\Programming\Suitability_project\data_with\Suitability60.
 Collins_station = 'FTCollins_station.shp'
 Pueblo_station = 'Pueblo_station.shp'
 
-
 # Running cost distance function with suitability outcomes and city train stations
 CollinsCost = arcpy.sa.CostDistance(Collins_station, 'Suitability120.tif')
 CollinsCost.save('ColCost120.tif')
 PuebloCost = arcpy.sa.CostDistance(Pueblo_station, 'Suitability120.tif')
 PuebloCost.save('PueCost120.tif')
 
+CollinsCost2 = arcpy.sa.CostDistance(Collins_station, 'Suitability60.tif')
+CollinsCost2.save('ColCost60.tif')
+PuebloCost2 = arcpy.sa.CostDistance(Pueblo_station, 'Suitability60.tif')
+PuebloCost2.save('PueCost60.tif')
+
 # Running Corridor analysis to create final product 
 Corr120 = arcpy.sa.Corridor('ColCost120.tif', 'PueCost120.tif')
 Corr120.save('Corridor120.tif')
+
+Corr60 = arcpy.sa.Corridor('ColCost60.tif', 'PueCost60.tif')
+Corr60.save('Corridor60.tif')
+
+# stopping timer
+print(datetime.now() - startTime)
